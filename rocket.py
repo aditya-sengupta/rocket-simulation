@@ -1,6 +1,6 @@
 import sys
 sys.path.append("..")
-from dynamic import *
+from dynamics.dynamic import DynamicSystem
 
 class Parachute:
 
