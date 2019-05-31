@@ -92,8 +92,8 @@ def test_kalman_openrocket(subarktos, read_t, read_alt, read_acc):
     sigma_acc = np.max(read_acc)/64
     alt_noise = np.random.normal(0, sigma_alt, np.size(read_alt))
     acc_noise = np.random.normal(0, sigma_acc, np.size(read_acc))
-    sensor_data = np.vstack([(read_alt + alt_noise, read_acc + acc_noise)])
-    filtered_times, filtered_states, _ = subarktos.simulate(dt=0.001, timeout=120, kalman=(read_t, sensor_data.T))
+    sensor_data = np.vstack([(read_alt + alt_noise, read_acc + acc_noise)]).T
+    filtered_times, filtered_states, _ = subarktos.simulate(dt=0.001, timeout=120, kalman=(read_t, sensor_data))
 
     def interpolate_state_data(data):
         def toreturn(t):
