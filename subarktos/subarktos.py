@@ -1,7 +1,10 @@
 import sys
 sys.path.append("..")
 from rocket import *
+import numpy as np
+import pandas as pd
 from scipy.integrate import quad
+from matplotlib import pyplot as plt
 
 def get_subarktos():
     mass = 4.42 #kg
