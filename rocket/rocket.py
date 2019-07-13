@@ -31,7 +31,6 @@ class Parachute:
 
     def drag(self, velocity, t):
         # velocity in m/s
-        # these are random magic numbers
         if not self.deployed or t - self.t_deployed < self.CHUTE_OPEN_DELAY:
             return 0
         return self.b_drag * velocity**2
@@ -245,9 +244,9 @@ class Rocket:
         P_updated = P_predicted - K.dot(self.H.dot(P_predicted))
         return (state_updated, P_updated)
 
-    def sim_results(self, t, k, states, inputs, terminate):
+    def sim_results(self, dt, k, states, inputs, terminate):
         self.reset()
-        print("Simulation ended at t =", t, "s due to", terminate)
+        print("Simulation ended at t =", np.round(dt*k, -int(np.floor(np.log10(dt)))), "s due to", terminate)
         processed_states = np.zeros([self.STATE_SIZE, k])
         processed_inputs = np.zeros([self.INPUT_SIZE, k])
         states = states.T
@@ -256,24 +255,24 @@ class Rocket:
             processed_states[i] = state[:k]
         for i, input in enumerate(inputs):
             processed_inputs[i] = input[:k]
-        return (np.linspace(0,t,k+1)[:k], processed_states, processed_inputs)
+        return (np.linspace(0,dt*k,k+1)[:k], processed_states, processed_inputs)
 
     def simulate(self, dt=0.01, timeout=30, verbose=False, kalman=None):
-        interrupt = False
-        t, k = 0, 0
+        k = 0
         if kalman is not None:
             m = 0
             measure_times = kalman[0]
-        states = np.zeros([int(np.ceil(timeout/dt))+1, self.STATE_SIZE])
-        inputs = np.zeros([int(np.ceil(timeout/dt))+1, self.INPUT_SIZE])
+        num_timesteps = int(np.ceil(timeout/dt))+1
+        states = np.zeros([num_timesteps, self.STATE_SIZE])
+        inputs = np.zeros([num_timesteps, self.INPUT_SIZE])
         terminate = "error."
         try:
-            while t < timeout:
+            while k < num_timesteps:
                 if verbose and hasattr(self, "compact_status") and k % 100 == 0:
-                    self.compact_status(t)
+                    self.compact_status(dt*k)
                 states[k] = self.state
-                inputs[k], input_status, state_predicted, P_predicted = self.predict(t, dt)
-                if kalman is not None and m < measure_times.size and np.isclose(t, measure_times[m], atol=dt/2):
+                inputs[k], input_status, state_predicted, P_predicted = self.predict(dt*k, dt)
+                if kalman is not None and m < measure_times.size and np.isclose(dt*k, measure_times[m], atol=dt/2):
                     self.state, self.P = self.update(state_predicted, P_predicted, kalman[1][m])
                     m += 1
                 else:
@@ -282,17 +281,15 @@ class Rocket:
                 if verbose and input_status is not None and k % 100 == 0:
                     print(input_status)
                 if self.simend:
-                    terminate = "end condition."
+                    terminate = "landing."
                     break
-                t += dt
-                t = np.round(t, -int(np.log10(dt)))
                 k += 1
         except KeyboardInterrupt:
             print("\nSteps completed:", k)
             terminate = "interrupt."
-        if t >= timeout:
+        if k == num_timesteps:
             terminate = "timeout."
-        return self.sim_results(t, k, states, inputs, terminate)
+        return self.sim_results(dt, k, states, inputs, terminate)
 
     def reset(self):
         # for some reason copy.deepcopy isn't working so here

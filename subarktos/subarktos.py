@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 def get_subarktos():
     mass = 4.42 #kg
-    motor = Motor(1.223, 0.713, "J450.txt")
+    motor = Motor(1.223, 0.713, "data/J450.txt")
     drogue = Parachute(0.3, 1.8, "Drogue")
     main = Parachute(0.9, 2.2, "Main", alt=800)
     altimeter = Sensor(0, 5.54, None)
@@ -18,7 +18,7 @@ def get_subarktos():
     return subarktos
 
 def get_state_data():
-    sim = pd.read_csv("subarktos_sim.csv", comment='#')
+    sim = pd.read_csv("data/subarktos_sim.csv", comment='#')
     read_t = np.array(sim['Time (s)'])
     read_alt = np.array(sim['Altitude (ft)'])
     read_vel = np.array(sim['Vertical velocity (ft/s)'])
@@ -26,7 +26,7 @@ def get_state_data():
     return (read_t, read_alt, read_vel, read_acc)
 
 def get_force_data():
-    sim = pd.read_csv("subarktos_sim.csv", comment='#')
+    sim = pd.read_csv("data/subarktos_sim.csv", comment='#')
     read_t = np.array(sim['Time (s)'])
     t_apogee = 16.16 # read off csv
     read_drag = np.array(sim['Drag force (N)'])
@@ -54,8 +54,6 @@ def test_acc_differences(subarktos, read_t, read_acc):
 def sim_and_plot(subarktos, read_t, read_alt, read_vel, read_acc, read_force):
     plt.figure()
     times, states, inputs = subarktos.simulate(dt=0.001, timeout=120, verbose=False)
-
-    print(states[1][2300:2400])
 
     plt.subplot(2,2,1)
     plt.plot(times, 3.28*states[0], label='subarktos.simulate()')
